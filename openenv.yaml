@@ -1,0 +1,23 @@
+spec_version: 1
+name: cloud_cost_optimizer
+type: space
+runtime: fastapi
+version: 0.1.0
+app: server.app:app
+port: 8000
+
+tasks:
+  - id: "zombie_shutdown"
+    name: "Terminate Idle Instance"
+    difficulty: "easy"
+    description: "Identify and stop a server with 0% CPU usage."
+
+  - id: "cost_reduction"
+    name: "Downsize Over-provisioned Servers"
+    difficulty: "medium"
+    description: "Resize 5 servers to smaller types without crashing the app."
+
+  - id: "load_balance_spike"
+    name: "Handle Traffic Surge"
+    difficulty: "hard"
+    description: "Balance costs during a 500% traffic spike."
