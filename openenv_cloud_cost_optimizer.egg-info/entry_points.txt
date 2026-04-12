@@ -1,0 +1,2 @@
+[console_scripts]
+server = cloud_cost_optimizer.server.app:main

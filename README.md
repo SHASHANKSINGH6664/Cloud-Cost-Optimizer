@@ -1,6 +1,6 @@
 ---
-title: Cloud Cost Optimizer Environment Server
-emoji: 🥁
+title: Cloud Cost Optimizer Environment
+emoji: ☁️
 colorFrom: blue
 colorTo: purple
 sdk: docker
@@ -11,245 +11,93 @@ tags:
   - openenv
 ---
 
-# Cloud Cost Optimizer Environment
+# ☁️ AI-Driven Cloud Cost Optimizer Environment
 
-A simple test environment that echoes back messages. Perfect for testing the env APIs as well as demonstrating environment usage patterns.
+An Autonomous Cloud Financial Management Environment that uses Large Language Models to balance strict system survival with aggressive cost consolidation. 
 
-## Quick Start
+Modern companies waste billions of dollars annually on over-provisioned cloud infrastructure. This environment replaces static auto-scaling rules with an intelligent, real-time AI cloud engineer, heavily featuring **"Make-Before-Break"** load balancing to survive traffic surges without dropping system health.
 
-The simplest way to use the Cloud Cost Optimizer environment is through the `CloudCostOptimizerEnv` class:
+## 🚀 The Simulation Scenarios (Tasks)
 
-```python
-from cloud_cost_optimizer import CloudCostOptimizerAction, CloudCostOptimizerEnv
+The environment includes three specific stress-test scenarios for the AI agent to solve:
+1. **`zombie_shutdown`**: Identify and terminate expensive servers running at 0% CPU without touching the active nodes.
+2. **`cost_reduction`**: Consolidate loads and terminate high-cost, underutilized servers to minimize hourly burn rate.
+3. **`load_balance_spike`**: Face a massive simulated traffic surge and scale out infrastructure immediately to prevent system health from dropping to zero.
 
-try:
-    # Create environment from Docker image
-    cloud_cost_optimizerenv = CloudCostOptimizerEnv.from_docker_image("cloud_cost_optimizer-env:latest")
+---
 
-    # Reset
-    result = cloud_cost_optimizerenv.reset()
-    print(f"Reset: {result.observation.echoed_message}")
+## 💻 Quick Start & Local Development
 
-    # Send multiple messages
-    messages = ["Hello, World!", "Testing echo", "Final message"]
+Because this project is fully Dockerized and uses the standard OpenEnv specification, running it locally is incredibly simple.
 
-    for msg in messages:
-        result = cloud_cost_optimizerenv.step(CloudCostOptimizerAction(message=msg))
-        print(f"Sent: '{msg}'")
-        print(f"  → Echoed: '{result.observation.echoed_message}'")
-        print(f"  → Length: {result.observation.message_length}")
-        print(f"  → Reward: {result.reward}")
+### 1. Build and Run the Environment
+```bash
+# Build the Docker image
+docker build -t cloud-ai-optimizer .
 
-finally:
-    # Always clean up
-    cloud_cost_optimizerenv.close()
+# Run the OpenEnv FastApi server
+docker run -p 8000:8000 cloud-ai-optimizer
 ```
 
-That's it! The `CloudCostOptimizerEnv.from_docker_image()` method handles:
-- Starting the Docker container
-- Waiting for the server to be ready
-- Connecting to the environment
-- Container cleanup when you call `close()`
-
-## Building the Docker Image
-
-Before using the environment, you need to build the Docker image:
+2. Run the Baseline AI Agent
+Once the environment is running on port 8000, open a second terminal and run the official inference script. Make sure you have an `.env` file with your `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN`.
 
 ```bash
-# From project root
-docker build -t cloud_cost_optimizer-env:latest -f server/Dockerfile .
+python inference.py
 ```
 
-## Deploying to Hugging Face Spaces
+You will see the AI output its logic [START], [STEP], and [END] logs as it manages the server rack in real-time!
 
-You can easily deploy your OpenEnv environment to Hugging Face Spaces using the `openenv push` command:
+🧠 Environment Details
+Action Schema (CloudCostOptimizerAction)
+The agent interacts with the environment by sending this JSON structure:
 
-```bash
-# From the environment directory (where openenv.yaml is located)
+action_type (str): The command to execute (e.g., "start_server", "terminate_server", "do_nothing").
+
+target_server_id (str): The ID of the server to target, or "new" if provisioning a new one.
+
+Observation Schema (CloudCostOptimizerObservation)
+The environment returns the current state of the infrastructure:
+
+servers (list): A list of server objects detailing id, cpu_usage, hourly_cost, and status.
+
+system_health (float): The overall health of the cluster (0.0 to 100.0).
+
+Reward & Info
+The info dictionary returns current_cost, system_health, and step_number. The agent is evaluated heavily on maximizing the system_health score while minimizing the current_cost across an episode.
+
+☁️ Deploying to Hugging Face Spaces
+You can easily deploy this environment to Hugging Face Spaces using the openenv push command provided by the hackathon organizers:
+
+```Bash
+# From the project root
 openenv push
 
-# Or specify options
-openenv push --namespace my-org --private
-```
-
-The `openenv push` command will:
-1. Validate that the directory is an OpenEnv environment (checks for `openenv.yaml`)
-2. Prepare a custom build for Hugging Face Docker space (enables web interface)
-3. Upload to Hugging Face (ensuring you're logged in)
-
-### Prerequisites
-
-- Authenticate with Hugging Face: The command will prompt for login if not already authenticated
-
-### Options
-
-- `--directory`, `-d`: Directory containing the OpenEnv environment (defaults to current directory)
-- `--repo-id`, `-r`: Repository ID in format 'username/repo-name' (defaults to 'username/env-name' from openenv.yaml)
-- `--base-image`, `-b`: Base Docker image to use (overrides Dockerfile FROM)
-- `--private`: Deploy the space as private (default: public)
-
-### Examples
-
-```bash
-# Push to your personal namespace (defaults to username/env-name from openenv.yaml)
-openenv push
-
-# Push to a specific repository
+# Or specify a specific repository
 openenv push --repo-id my-org/my-env
 
-# Push with a custom base image
-openenv push --base-image ghcr.io/meta-pytorch/openenv-base:latest
-
-# Push as a private space
-openenv push --private
-
-# Combine options
-openenv push --repo-id my-org/my-env --base-image custom-base:latest --private
 ```
 
-After deployment, your space will be available at:
-`https://huggingface.co/spaces/<repo-id>`
+The openenv push command will:
 
-The deployed space includes:
-- **Web Interface** at `/web` - Interactive UI for exploring the environment
-- **API Documentation** at `/docs` - Full OpenAPI/Swagger interface
-- **Health Check** at `/health` - Container health monitoring
-- **WebSocket** at `/ws` - Persistent session endpoint for low-latency interactions
+Validate the openenv.yaml file.
 
-## Environment Details
+Upload the environment to Hugging Face (ensuring you're logged in).
 
-### Action
-**CloudCostOptimizerAction**: Contains a single field
-- `message` (str) - The message to echo back
+Automatically expose the Web Interface, API Docs, and WebSocket endpoints.
 
-### Observation
-**CloudCostOptimizerObservation**: Contains the echo response and metadata
-- `echoed_message` (str) - The message echoed back
-- `message_length` (int) - Length of the message
-- `reward` (float) - Reward based on message length (length × 0.1)
-- `done` (bool) - Always False for echo environment
-- `metadata` (dict) - Additional info like step count
+### 📂 Project Structure
 
-### Reward
-The reward is calculated as: `message_length × 0.1`
-- "Hi" → reward: 0.2
-- "Hello, World!" → reward: 1.3
-- Empty message → reward: 0.0
-
-## Advanced Usage
-
-### Connecting to an Existing Server
-
-If you already have a Cloud Cost Optimizer environment server running, you can connect directly:
-
-```python
-from cloud_cost_optimizer import CloudCostOptimizerEnv
-
-# Connect to existing server
-cloud_cost_optimizerenv = CloudCostOptimizerEnv(base_url="<ENV_HTTP_URL_HERE>")
-
-# Use as normal
-result = cloud_cost_optimizerenv.reset()
-result = cloud_cost_optimizerenv.step(CloudCostOptimizerAction(message="Hello!"))
-```
-
-Note: When connecting to an existing server, `cloud_cost_optimizerenv.close()` will NOT stop the server.
-
-### Using the Context Manager
-
-The client supports context manager usage for automatic connection management:
-
-```python
-from cloud_cost_optimizer import CloudCostOptimizerAction, CloudCostOptimizerEnv
-
-# Connect with context manager (auto-connects and closes)
-with CloudCostOptimizerEnv(base_url="http://localhost:8000") as env:
-    result = env.reset()
-    print(f"Reset: {result.observation.echoed_message}")
-    # Multiple steps with low latency
-    for msg in ["Hello", "World", "!"]:
-        result = env.step(CloudCostOptimizerAction(message=msg))
-        print(f"Echoed: {result.observation.echoed_message}")
-```
-
-The client uses WebSocket connections for:
-- **Lower latency**: No HTTP connection overhead per request
-- **Persistent session**: Server maintains your environment state
-- **Efficient for episodes**: Better for many sequential steps
-
-### Concurrent WebSocket Sessions
-
-The server supports multiple concurrent WebSocket connections. To enable this,
-modify `server/app.py` to use factory mode:
-
-```python
-# In server/app.py - use factory mode for concurrent sessions
-app = create_app(
-    CloudCostOptimizerEnvironment,  # Pass class, not instance
-    CloudCostOptimizerAction,
-    CloudCostOptimizerObservation,
-    max_concurrent_envs=4,  # Allow 4 concurrent sessions
-)
-```
-
-Then multiple clients can connect simultaneously:
-
-```python
-from cloud_cost_optimizer import CloudCostOptimizerAction, CloudCostOptimizerEnv
-from concurrent.futures import ThreadPoolExecutor
-
-def run_episode(client_id: int):
-    with CloudCostOptimizerEnv(base_url="http://localhost:8000") as env:
-        result = env.reset()
-        for i in range(10):
-            result = env.step(CloudCostOptimizerAction(message=f"Client {client_id}, step {i}"))
-        return client_id, result.observation.message_length
-
-# Run 4 episodes concurrently
-with ThreadPoolExecutor(max_workers=4) as executor:
-    results = list(executor.map(run_episode, range(4)))
-```
-
-## Development & Testing
-
-### Direct Environment Testing
-
-Test the environment logic directly without starting the HTTP server:
-
-```bash
-# From the server directory
-python3 server/cloud_cost_optimizer_environment.py
-```
-
-This verifies that:
-- Environment resets correctly
-- Step executes actions properly
-- State tracking works
-- Rewards are calculated correctly
-
-### Running Locally
-
-Run the server locally for development:
-
-```bash
-uvicorn server.app:app --reload
-```
-
-## Project Structure
-
-```
+```text
 cloud_cost_optimizer/
-├── .dockerignore         # Docker build exclusions
-├── __init__.py            # Module exports
-├── README.md              # This file
 ├── openenv.yaml           # OpenEnv manifest
-├── pyproject.toml         # Project metadata and dependencies
-├── uv.lock                # Locked dependencies (generated)
-├── client.py              # CloudCostOptimizerEnv client
-├── models.py              # Action and Observation models
-└── server/
-    ├── __init__.py        # Server module exports
-    ├── cloud_cost_optimizer_environment.py  # Core environment logic
-    ├── app.py             # FastAPI application (HTTP + WebSocket endpoints)
-    └── Dockerfile         # Container image definition
+├── inference.py           # The baseline AI agent evaluation script
+├── models.py              # Pydantic Action/Observation schemas
+├── tasks.py               # The 3 hackathon evaluation scenarios
+├── requirements.txt       # Dependencies (FastAPI, OpenAI, etc.)
+├── server/
+│   ├── cloud_cost_optimizer_environment.py  # Core simulation logic
+│   └── app.py             # OpenEnv FastAPI & WebSocket application
+├── Dockerfile             # Container image definition
+└── .gitignore             # Excluded files (like .env)
 ```

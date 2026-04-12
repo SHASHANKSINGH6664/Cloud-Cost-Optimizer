@@ -1,5 +1,20 @@
+try:
+    import openai
+    import dotenv
+except ImportError:
+    import sys
+    import subprocess
+    print("Dependencies missing. Force installing openai and python-dotenv...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "openai", "python-dotenv"])
+    import openai
+    import dotenv
+    
 import os
 import json
+
+
+
+
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -45,7 +60,7 @@ def run_evaluation():
         # MANDATORY LOG: [START]
         print(f"[START] Task {task_id}")
         
-        observation, _ = env.reset(task_id=task_id)
+        observation = env.reset(task_id=task_id)
         done = False
         step_count = 0
         
@@ -68,17 +83,25 @@ def run_evaluation():
                 action_dict = json.loads(raw_json)
                 action = CloudCostOptimizerAction(**action_dict)
                 
-                observation, reward, done, info = env.step(action)
+                # Safely extract just the observation
+                step_result = env.step(action)
+                observation = step_result[0] if isinstance(step_result, tuple) else step_result
                 
                 # MANDATORY LOG: [STEP]
                 print(f"[STEP] Task {task_id} | Step {step_count} | Action: {action.action_type} on {action.target_server_id} | Health: {info['health']}% | Cost: ${info['current_cost']}/hr")
                 
             except Exception as e:
                 print(f"[STEP] Task {task_id} | Step {step_count} | ERROR: {str(e)} | Action: DO_NOTHING")
-                observation, reward, done, info = env.step({"action_type": "do_nothing", "target_server_id": "none"})
+                fallback_action = CloudCostOptimizerAction(
+                    action_type="do_nothing", 
+                    target_server_id="none"
+                )
+                # Safely extract just the observation here too
+                step_result = env.step(fallback_action)
+                observation = step_result[0] if isinstance(step_result, tuple) else step_result
 
         # Calculate final score for the task
-        health_value = info.get("system_health", info.get("health", 100.0))
+        health_value = observation.system_health
         health_score = health_value / 100.0
         task_score = health_score * 1.0  # Simple scoring metric for the grader
         

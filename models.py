@@ -10,8 +10,8 @@ Data models for the Cloud Cost Optimizer Environment.
 The cloud_cost_optimizer environment is a simple test environment that echoes back messages.
 """
 
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
 
 # 1. What does a single server look like?
 class ServerState(BaseModel):
@@ -24,6 +24,9 @@ class ServerState(BaseModel):
 class CloudCostOptimizerObservation(BaseModel):
     servers: List[ServerState]
     system_health: float  # Starts at 100%. Drops if the AI stops busy servers.
+    reward: float = 0.0
+    done: bool = False
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 # 3. What can the AI do? (Action)
 class CloudCostOptimizerAction(BaseModel):
